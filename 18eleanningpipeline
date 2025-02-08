@@ -1,25 +1,53 @@
 pipeline {
     agent any
+
+    environment {
+        GIT_REPO = 'git@github.com:Sofia123-ux/19eleanningpipeline.git'
+        GIT_BRANCH = 'main' // Змініть на потрібну гілку
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/your-repo-url.git'
+                script {
+                    sshagent(['your-ssh-key-id']) { // Додайте SSH-контейнер Jenkins
+                        sh 'git clone -b ${GIT_BRANCH} ${GIT_REPO} source_code'
+                    }
+                }
             }
         }
+
         stage('Build') {
             steps {
-                sh 'echo "Building Project..."'
+                dir('source_code') {
+                    sh './build.sh' // Змініть на команду для вашого проєкту
+                }
             }
         }
+
         stage('Test') {
             steps {
-                sh 'echo "Running Tests..."'
+                dir('source_code') {
+                    sh './run_tests.sh' // Виконання тестів
+                }
             }
         }
+
         stage('Deploy') {
             steps {
-                sh 'echo "Deploying to Server..."'
+                dir('source_code') {
+                    sh './deploy.sh' // Команда для деплою
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build and Deployment Successful!'
+        }
+        failure {
+            echo '❌ Build or Deployment Failed!'
         }
     }
 }
